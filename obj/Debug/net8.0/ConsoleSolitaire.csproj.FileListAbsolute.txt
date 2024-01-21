@@ -1,0 +1,14 @@
+C:\dev\ConsoleSolitaire\ConsoleSolitaire\obj\Debug\net8.0\ConsoleSolitaire.GeneratedMSBuildEditorConfig.editorconfig
+C:\dev\ConsoleSolitaire\ConsoleSolitaire\obj\Debug\net8.0\ConsoleSolitaire.AssemblyInfoInputs.cache
+C:\dev\ConsoleSolitaire\ConsoleSolitaire\obj\Debug\net8.0\ConsoleSolitaire.AssemblyInfo.cs
+C:\dev\ConsoleSolitaire\ConsoleSolitaire\obj\Debug\net8.0\ConsoleSolitaire.csproj.CoreCompileInputs.cache
+C:\dev\ConsoleSolitaire\ConsoleSolitaire\bin\Debug\net8.0\ConsoleSolitaire.exe
+C:\dev\ConsoleSolitaire\ConsoleSolitaire\bin\Debug\net8.0\ConsoleSolitaire.deps.json
+C:\dev\ConsoleSolitaire\ConsoleSolitaire\bin\Debug\net8.0\ConsoleSolitaire.runtimeconfig.json
+C:\dev\ConsoleSolitaire\ConsoleSolitaire\bin\Debug\net8.0\ConsoleSolitaire.dll
+C:\dev\ConsoleSolitaire\ConsoleSolitaire\bin\Debug\net8.0\ConsoleSolitaire.pdb
+C:\dev\ConsoleSolitaire\ConsoleSolitaire\obj\Debug\net8.0\ConsoleSolitaire.dll
+C:\dev\ConsoleSolitaire\ConsoleSolitaire\obj\Debug\net8.0\refint\ConsoleSolitaire.dll
+C:\dev\ConsoleSolitaire\ConsoleSolitaire\obj\Debug\net8.0\ConsoleSolitaire.pdb
+C:\dev\ConsoleSolitaire\ConsoleSolitaire\obj\Debug\net8.0\ConsoleSolitaire.genruntimeconfig.cache
+C:\dev\ConsoleSolitaire\ConsoleSolitaire\obj\Debug\net8.0\ref\ConsoleSolitaire.dll
