@@ -12,3 +12,4 @@ C:\dev\ConsoleSolitaire\ConsoleSolitaire\obj\Debug\net8.0\refint\ConsoleSolitair
 C:\dev\ConsoleSolitaire\ConsoleSolitaire\obj\Debug\net8.0\ConsoleSolitaire.pdb
 C:\dev\ConsoleSolitaire\ConsoleSolitaire\obj\Debug\net8.0\ConsoleSolitaire.genruntimeconfig.cache
 C:\dev\ConsoleSolitaire\ConsoleSolitaire\obj\Debug\net8.0\ref\ConsoleSolitaire.dll
+C:\dev\ConsoleSolitaire\ConsoleSolitaire\obj\Debug\net8.0\ConsoleSolitaire.sourcelink.json

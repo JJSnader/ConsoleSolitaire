@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace ConsoleSolitaire
 {
     internal class CardStack
     {
-        private List<Card> cards;
+        private readonly List<Card> cards;
 
         public CardStack() 
         {
@@ -63,6 +58,37 @@ namespace ConsoleSolitaire
                 else
                     foreach (var row in cards[i].CardDisplay)
                         result.Add(row);                
+            }
+
+            return result;
+        }
+
+        public List<string> GetColorMap()
+        {
+            var result = new List<string>();
+
+            if (cards == null || cards.Count == 0)
+                return result;
+
+            for (int i = 0; i < cards.Count; i++)
+            {
+                if (!cards[i].Revealed)
+                {
+                    result.Add("".PadLeft(Deck.Card_Width, 'W'));
+                }
+                else if (i != cards.Count - 1)
+                {
+                    result.Add("".PadLeft(Deck.Card_Width, 'W'));
+
+                    var redSuites = new List<char>(){ '♦', '♥' };
+                    if (redSuites.Contains(cards[i].Suite))
+                        result.Add("WW" + "".PadLeft(Deck.Card_Width - 4, 'R') + "WW");
+                    else 
+                        result.Add("".PadLeft(Deck.Card_Width, 'W'));
+                }
+                else
+                    foreach (var row in cards[i].CardColorMap)
+                        result.Add(row);
             }
 
             return result;

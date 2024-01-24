@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
-
+﻿
 namespace ConsoleSolitaire
 {
     internal class Deck
@@ -16,12 +9,15 @@ namespace ConsoleSolitaire
         public const int Display_Height = 46;
         public const int Display_Width = 99;
 
-        private List<Card> _allCards = [];
-        private List<string> _helpText = [
+        private readonly List<Card> _allCards = [];
+        private readonly List<string> _helpText = [
             "Flip - Show next card in deck | Move 10S JH - Move 10 of Spades to Jack of Hearts | Help ",
-            "Pack AH - Move Ace of Hearts to Hearts pile | Exit - Exit game | New - Start new game"
+            "Pack AH - Move Ace of Hearts to Hearts pile | Exit - Exit game | New - Start new game    "
         ];
+
         public string UserMessage = string.Empty;
+
+        public Mode GameMode = Mode.Single;
 
         public List<string> ColorMap = [];
 
@@ -31,7 +27,7 @@ namespace ConsoleSolitaire
 
         public List<Card> DiscardedCardDeck { get; set; }
 
-        public Card? RevealedDeckCard { get; set; }
+        public RevealedCardStack RevealedCardDeck { get; set; }
 
         public Card? TopSpade 
         {
@@ -45,11 +41,14 @@ namespace ConsoleSolitaire
         }
         public Card? TopDiamond { get; set; }
         public Card? TopClub { get; set; }
+        public CardBack CurrentCardBack { get; set; }
 
         private Card? _topSpade;
         private Card? _topHeart;
         private Card? _topDiamond;
         private Card? _topClub;
+
+        private CardBacks _cb;
 
         private Card CardBack { get; set; }
         private Card EmptyDeck { get; set; }
@@ -60,19 +59,10 @@ namespace ConsoleSolitaire
             Stacks = [];
             CardDeck = [];
             DiscardedCardDeck = [];
-            CardBack = new Card([
-                "┏━━━━━━━━━━━┓",
-                "┃ ♠ ♦ ♠ ♦ ♠ ┃",
-                "┃           ┃",
-                "┃ ♥ ♣ ♥ ♣ ♥ ┃",
-                "┃           ┃",
-                "┃ ♠ ♦ ♠ ♦ ♠ ┃",
-                "┃           ┃",
-                "┃ ♥ ♣ ♥ ♣ ♥ ┃",
-                "┃           ┃",
-                "┃ ♠ ♦ ♠ ♦ ♠ ┃",
-                "┗━━━━━━━━━━━┛"
-            ], false, "0", 'X');
+            _cb = new();
+            RevealedCardDeck = new();
+            CurrentCardBack = ConsoleSolitaire.CardBack.Standard;
+            CardBack = new Card(_cb.Standard, false, "0", 'X');
             EmptyDeck = new Card([
                 "┏━━━━━━━━━━━┓",
                 "┃           ┃",
@@ -91,7 +81,7 @@ namespace ConsoleSolitaire
 
         public List<string> GetDisplay()
         {
-            ColorMap = [];
+            ColorMap = new List<string>(Display_Height);
             for (int i = 0; i < Display_Height; i++)
                 ColorMap.Add("".PadLeft(Display_Width, 'G'));
             
@@ -100,22 +90,40 @@ namespace ConsoleSolitaire
                 result.Add("".PadLeft(Display_Width));
 
             if (CardDeck.Count > 0)
-                DrawSubDisplay(0, 0, CardBack.CardDisplay, result);
+                DrawSubDisplay(0, 0, 
+                    CardBack.CardDisplay, result, 
+                    CardBack.CardColorMap, ColorMap);
             else
-                DrawSubDisplay(0, 0, EmptyDeck.CardDisplay, result);
+                DrawSubDisplay(0, 0, 
+                    EmptyDeck.CardDisplay, result, 
+                    EmptyDeck.CardColorMap, ColorMap);
 
-            if (RevealedDeckCard != null)
-                DrawSubDisplay(0, Card_Width + 1, RevealedDeckCard.CardDisplay, result);
+            if (RevealedCardDeck != null && RevealedCardDeck.Count > 0)
+                DrawSubDisplay(0, Card_Width + 1, 
+                    RevealedCardDeck.GetDisplay(), result, 
+                    RevealedCardDeck.GetColorMap(), ColorMap);
             else
-                DrawSubDisplay(0, Card_Width + 1, EmptyDeck.CardDisplay, result);
+                DrawSubDisplay(0, Card_Width + 1, 
+                    EmptyDeck.CardDisplay, result,
+                    EmptyDeck.CardColorMap, ColorMap);
 
-            DrawSubDisplay(0, (Card_Width * 3) + 3, TopSpade == null ? EmptyDeck.CardDisplay : TopSpade.CardDisplay, result);
-            DrawSubDisplay(0, (Card_Width * 4) + 4, TopHeart == null ? EmptyDeck.CardDisplay : TopHeart.CardDisplay, result);
-            DrawSubDisplay(0, (Card_Width * 5) + 5, TopDiamond == null ? EmptyDeck.CardDisplay : TopDiamond.CardDisplay, result);
-            DrawSubDisplay(0, (Card_Width * 6) + 6, TopClub == null ? EmptyDeck.CardDisplay : TopClub.CardDisplay, result);
+            DrawSubDisplay(0, (Card_Width * 3) + 3, 
+                TopSpade == null ? EmptyDeck.CardDisplay : TopSpade.CardDisplay, result,
+                TopSpade == null ? EmptyDeck.CardColorMap : TopSpade.CardColorMap, ColorMap);
+            DrawSubDisplay(0, (Card_Width * 4) + 4,
+                TopHeart == null ? EmptyDeck.CardDisplay : TopHeart.CardDisplay, result,
+                TopHeart == null ? EmptyDeck.CardColorMap : TopHeart.CardColorMap, ColorMap);
+            DrawSubDisplay(0, (Card_Width * 5) + 5,
+                TopDiamond == null ? EmptyDeck.CardDisplay : TopDiamond.CardDisplay, result,
+                TopDiamond == null ? EmptyDeck.CardColorMap : TopDiamond.CardColorMap, ColorMap);
+            DrawSubDisplay(0, (Card_Width * 6) + 6, 
+                TopClub == null ? EmptyDeck.CardDisplay : TopClub.CardDisplay, result,
+                TopClub == null ? EmptyDeck.CardColorMap : TopClub.CardColorMap, ColorMap);
 
             for (int i = 0; i < Stacks.Count; ++i)
-                DrawSubDisplay(Card_Height + 2, (Card_Width * i) + i, Stacks[i].GetDisplay(), result);
+                DrawSubDisplay(Card_Height + 2, (Card_Width * i) + i, 
+                    Stacks[i].GetDisplay(), result,
+                    Stacks[i].GetColorMap(), ColorMap);
 
             result[^3] = _helpText[0].PadRight(Display_Width);
             result[^2] = _helpText[1].PadRight(Display_Width);
@@ -124,127 +132,21 @@ namespace ConsoleSolitaire
             for (int i = 0; i < result.Count; ++i)
                 result[i] = result[i].PadRight(Display_Width);
 
-            // Figure out the color map
-            for (int s = 0; s < result.Count; s++)
-            {
-                var inCard = false;
-                for (int i = 0; i < ColorMap[s].Length; ++i)
-                {
-                    if (i >= result[s].Length)
-                    {
-                        ColorMap[s] = ColorMap[s][..i];
-                        break;
-                    }
-                    if (result[s][i] == '┏' || result[s][i] == '┗')
-                        ColorMap[s] = ColorMap[s][..i] + "".PadLeft(Card_Width, 'W') + ColorMap[s][(i + Card_Width)..];
-                    else if (result[s][i] == '┃')
-                    {
-                        inCard = !inCard;
-                        if (inCard)
-                        {
-                            string whites = "".PadLeft(Card_Width, 'W');
-                            string cardLine = ColorMap[s].Substring(i, Card_Width);
-                            if (cardLine.Contains('R'))
-                            {
-                                whites = string.Empty;
-                                foreach (char c in cardLine)
-                                    if (c == 'R')
-                                        whites += 'R';
-                                    else
-                                        whites += 'W';
-                                // This is specifically for revealed red suite cards that
-                                // are behind another revealed card
-                                if (whites == "WWWWWWWWWRRWW" || whites == "WWWWWWWWWWRWW")
-                                    whites = "WWRRWWWWWRRWW";
-                            }
-                            ColorMap[s] = ColorMap[s][..i] + whites + ColorMap[s][(i + Card_Width)..];
-                        }
-                    }
-                    if (result[s][i] == '♥' || result[s][i] == '♦')
-                    {
-                        ColorMap[s] = ColorMap[s][..i] + 'R' + ColorMap[s][(i + 1)..];
-                        List<char> numbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'J', 'Q', 'K', 'A'];
-                        // Make number red on revealed card below other cards
-                        if (i - 8 > 0 && numbers.Contains(result[s][i - 8]))
-                            ColorMap[s] = ColorMap[s][..(i - 9)] + "RRR" + ColorMap[s][(i - 6)..];
-                        // Do two digits in case the number is 10
-                        if (s - 1 >= 0 && numbers.Contains(result[s - 1][i]))
-                            ColorMap[s - 1] = ColorMap[s - 1][..i] + "RR" + ColorMap[s - 1][(i + 2)..];
-                        if (s + 1 < ColorMap.Count && numbers.Contains(result[s + 1][i]))
-                            ColorMap[s + 1] = ColorMap[s + 1][..(i - 1)] + "RR" + ColorMap[s + 1][(i + 1)..];
-                        // Special case for royalty
-                        if (i + 2 < result[s].Length && numbers.Contains(result[s][i + 2]))
-                            ColorMap[s] = ColorMap[s][..(i + 2)] + "R" + ColorMap[s][(i + 3)..];
-
-                    }                    
-                }
-            }
-
             return result;
         }
 
-        static void DrawSubDisplay(int topX, int topY, List<string> subDisplay, List<string> display)
+        static void DrawSubDisplay(int topX, int topY, List<string> subDisplay, List<string> display, List<string> subColorMap, List<string> colorMap)
         {
             for (int x = topX; x < (topX + subDisplay.Count); ++x)
             {
                 if (x >= display.Count)
                     break;
                 display[x] = display[x].Insert(topY, subDisplay[x - topX]);
-                display[x] = display[x].Remove(topY + Card_Width, Card_Width);
+                display[x] = display[x].Remove(topY + subDisplay[x - topX].Length, subDisplay[x - topX].Length);
+
+                colorMap[x] = colorMap[x].Insert(topY, subColorMap[x - topX]);
+                colorMap[x] = colorMap[x].Remove(topY + subColorMap[x - topX].Length, subColorMap[x - topX].Length);
             }
-        }
-
-        private void LoadDeck()
-        {
-            List<Suite> suites = [];
-            suites.Add(new Suite('♥'));
-            suites.Add(new Suite('♦'));
-            suites.Add(new Suite('♣'));
-            suites.Add(new Suite('♠'));
-
-            foreach (var s in suites)
-            {
-                if (s.SuiteChar == '♥')
-                    TopHeart = new Card(s.Blank, false, "B", '♥');
-                else if (s.SuiteChar == '♦')
-                    TopDiamond = new Card(s.Blank, false, "B", '♦');
-                else if (s.SuiteChar == '♣')
-                    TopClub = new Card(s.Blank, false, "B", '♣');
-                else if (s.SuiteChar == '♠')
-                    TopSpade = new Card(s.Blank, false, "B", '♠');
-
-                _allCards.Add(new Card(s.Ace, false, "A", s.SuiteChar));
-                _allCards.Add(new Card(s.Two, false, "2", s.SuiteChar));
-                _allCards.Add(new Card(s.Three, false, "3", s.SuiteChar));
-                _allCards.Add(new Card(s.Four, false, "4", s.SuiteChar));
-                _allCards.Add(new Card(s.Five, false, "5", s.SuiteChar));
-                _allCards.Add(new Card(s.Six, false, "6", s.SuiteChar));
-                _allCards.Add(new Card(s.Seven, false, "7", s.SuiteChar));
-                _allCards.Add(new Card(s.Eight, false, "8", s.SuiteChar));
-                _allCards.Add(new Card(s.Nine, false, "9", s.SuiteChar));
-                _allCards.Add(new Card(s.Ten, false, "10", s.SuiteChar));
-                _allCards.Add(new Card(s.Jack, false, "J", s.SuiteChar));
-                _allCards.Add(new Card(s.Queen, false, "Q", s.SuiteChar));
-                _allCards.Add(new Card(s.King, false, "K", s.SuiteChar));
-            }
-
-            RandomizeCardList(_allCards);
-
-            var unusedCards = new List<Card>(_allCards);
-
-            for (int i = 1; i < 8; i++)
-            {
-                var stack = new CardStack();
-                for (int j = 0; j < i; j++)
-                {
-                    stack.Add(unusedCards[^1]);
-                    unusedCards.RemoveAt(unusedCards.Count - 1);
-                }
-                stack[^1].Revealed = true;
-                Stacks.Add(stack);
-            }
-
-            CardDeck = unusedCards;
         }
 
         static void RandomizeCardList(List<Card> list)
@@ -263,23 +165,39 @@ namespace ConsoleSolitaire
         public void FlipNextDeckCard()
         {
             UserMessage = string.Empty;
+            RevealedCardDeck ??= new();
             if (CardDeck.Count > 0)
             {
-                if (RevealedDeckCard != null)
+                if (RevealedCardDeck != null && RevealedCardDeck.Count > 0)
                 {
-                    DiscardedCardDeck.Add(RevealedDeckCard);
-                    RevealedDeckCard.Revealed = false;
+                    foreach (var card in RevealedCardDeck.Cards)
+                    {
+                        card.Revealed = false;
+                        DiscardedCardDeck.Add(card);
+                    }
+                    RevealedCardDeck.Clear();
                 }
 
-                RevealedDeckCard = CardDeck[^1];
-                CardDeck.RemoveAt(CardDeck.Count - 1);
+                int revealCount = (int)GameMode;
+                for (int i = 0; i < revealCount; i++)
+                {
+                    if (CardDeck.Count > 0)
+                    {
+                        RevealedCardDeck.Add(CardDeck[^1]);
+                        CardDeck.RemoveAt(CardDeck.Count - 1);
+                    }
+                }
+                
             }
             else
             {
-                if (RevealedDeckCard != null)
+                if (RevealedCardDeck.Count > 0)
                 {
-                    CardDeck.Add(RevealedDeckCard);
-                    RevealedDeckCard = null;
+                    for (int i = RevealedCardDeck.Count - 1; i >= 0; i--)
+                    {
+                        CardDeck.Add(RevealedCardDeck[i]);
+                    }
+                    RevealedCardDeck.Clear();
                 }
 
                 for (int i = DiscardedCardDeck.Count - 1; i >= 0; i--)
@@ -334,17 +252,16 @@ namespace ConsoleSolitaire
 
             // Find first card
 
-            if (RevealedDeckCard != null && RevealedDeckCard.Suite == firstCardSuite && RevealedDeckCard.Number == firstCardNumber)
+            if (RevealedCardDeck != null && RevealedCardDeck.Count > 0 && RevealedCardDeck.Top.Suite == firstCardSuite && RevealedCardDeck.Top.Number == firstCardNumber)
             {
-                RevealedDeckCard.Revealed = true;
-                destCardStack.Add(RevealedDeckCard);
-                if (DiscardedCardDeck.Count > 0)
+                RevealedCardDeck.Top.Revealed = true;
+                destCardStack.Add(RevealedCardDeck.Top);
+                RevealedCardDeck.Cards.Remove(RevealedCardDeck.Top);
+                if (DiscardedCardDeck.Count > 0 && GameMode == Mode.Single)
                 {
-                    RevealedDeckCard = DiscardedCardDeck[^1];
+                    RevealedCardDeck.Add(DiscardedCardDeck[^1]);
                     DiscardedCardDeck.RemoveAt(DiscardedCardDeck.Count - 1);
                 }
-                else
-                    RevealedDeckCard = null;
             }
             else
             {
@@ -380,59 +297,11 @@ namespace ConsoleSolitaire
 
         }
 
-        private string IsMoveLegal(string firstCardNumber, char firstCardSuite, string secondCardNumber, char secondCardSuite)
-        {
-            var firstCardRed = firstCardSuite == '♥' || firstCardSuite == '♦';
-            var secondCardRed = secondCardSuite == '♥' || secondCardSuite == '♦';
-
-            if (((firstCardRed && secondCardRed) 
-                || (!firstCardRed && !secondCardRed))
-                && (secondCardSuite != 'X'))
-                return "MOVE FAILED - Both cards are of the same color.";
-
-            var firstCardNum = GetCardNum(firstCardNumber);
-            var secondCardNum = GetCardNum(secondCardNumber);
-
-            if (firstCardNum != secondCardNum - 1 && (firstCardNum != 13 || secondCardNum != -1))
-                return "MOVE FAILED - The specified card can't be moved onto the destination.";
-
-            return string.Empty;
-        }
-
-        private int GetCardNum(string cardNumber)
-        {
-            var cardNum = 0;
-            switch (cardNumber.ToUpper())
-            {
-                case "A":
-                    cardNum = 1;
-                    break;
-                case "J":
-                    cardNum = 11;
-                    break;
-                case "Q":
-                    cardNum = 12;
-                    break;
-                case "K":
-                    cardNum = 13;
-                    break;
-                case "B": // B is the blank
-                    cardNum = 0;
-                    break;
-                default:
-                    if (!int.TryParse(cardNumber, out cardNum))
-                        cardNum = -1;
-                    break;
-            }
-
-            return cardNum;
-        }
-
         public void Pack(string cardNum, char cardSuite)
         {
             UserMessage = string.Empty;
             cardNum = cardNum.ToUpper();
-            if (RevealedDeckCard != null && RevealedDeckCard.Number == cardNum && RevealedDeckCard.Suite == cardSuite)
+            if (RevealedCardDeck != null && RevealedCardDeck.Count > 0 && RevealedCardDeck.Top.Number == cardNum && RevealedCardDeck.Top.Suite == cardSuite)
             {
                 // We're packing the revealed deck card
                 switch(cardSuite)
@@ -522,24 +391,201 @@ namespace ConsoleSolitaire
             CheckForCompletion();
         }
 
+        public void AutoPack()
+        {
+            var packedCard = true;
+            while (packedCard)
+            {
+                packedCard = false;
+                if (RevealedCardDeck.Count > 0 && IsCardNextOnStack(RevealedCardDeck.Top))
+                {
+                    Pack(RevealedCardDeck.Top.Number, RevealedCardDeck.Top.Suite);
+                    packedCard = true;
+                }
+                else
+                {
+                    foreach (var s in Stacks)
+                    {
+                        if (s.Count == 0) continue;
+
+                        if (IsCardNextOnStack(s[^1]))
+                        {
+                            Pack(s[^1].Number, s[^1].Suite);
+                            packedCard = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        public void ChangeMode(Mode newMode)
+        {
+            GameMode = newMode;
+            if (RevealedCardDeck.Count > 0)
+            {
+                for (int i = RevealedCardDeck.Count - 1; i >= 0; i--)
+                {
+                    CardDeck.Add(RevealedCardDeck[i]);
+                    RevealedCardDeck.Cards.RemoveAt(i);
+                }
+                for (int i = 0; i < (int)GameMode; i++)
+                {
+                    if (CardDeck.Count > 0)
+                    {
+                        RevealedCardDeck.Add(CardDeck[^1]);
+                        CardDeck.RemoveAt(CardDeck.Count - 1);
+                    }
+                }
+            }
+        }
+
+        public void ChangeCardBack(CardBack newBack)
+        {
+            CurrentCardBack = newBack;
+            CardBack = new Card(_cb.GetCardBack(newBack), false, "0", 'X');
+        }
+
+        #region Private
+
+        private void LoadDeck()
+        {
+            List<Suite> suites = [];
+            suites.Add(new Suite('♥'));
+            suites.Add(new Suite('♦'));
+            suites.Add(new Suite('♣'));
+            suites.Add(new Suite('♠'));
+
+            foreach (var s in suites)
+            {
+                if (s.SuiteChar == '♥')
+                    TopHeart = new Card(s.Blank, false, "B", '♥');
+                else if (s.SuiteChar == '♦')
+                    TopDiamond = new Card(s.Blank, false, "B", '♦');
+                else if (s.SuiteChar == '♣')
+                    TopClub = new Card(s.Blank, false, "B", '♣');
+                else if (s.SuiteChar == '♠')
+                    TopSpade = new Card(s.Blank, false, "B", '♠');
+
+                _allCards.Add(new Card(s.Ace, false, "A", s.SuiteChar));
+                _allCards.Add(new Card(s.Two, false, "2", s.SuiteChar));
+                _allCards.Add(new Card(s.Three, false, "3", s.SuiteChar));
+                _allCards.Add(new Card(s.Four, false, "4", s.SuiteChar));
+                _allCards.Add(new Card(s.Five, false, "5", s.SuiteChar));
+                _allCards.Add(new Card(s.Six, false, "6", s.SuiteChar));
+                _allCards.Add(new Card(s.Seven, false, "7", s.SuiteChar));
+                _allCards.Add(new Card(s.Eight, false, "8", s.SuiteChar));
+                _allCards.Add(new Card(s.Nine, false, "9", s.SuiteChar));
+                _allCards.Add(new Card(s.Ten, false, "10", s.SuiteChar));
+                _allCards.Add(new Card(s.Jack, false, "J", s.SuiteChar));
+                _allCards.Add(new Card(s.Queen, false, "Q", s.SuiteChar));
+                _allCards.Add(new Card(s.King, false, "K", s.SuiteChar));
+            }
+
+            RandomizeCardList(_allCards);
+
+            var unusedCards = new List<Card>(_allCards);
+
+            for (int i = 1; i < 8; i++)
+            {
+                var stack = new CardStack();
+                for (int j = 0; j < i; j++)
+                {
+                    stack.Add(unusedCards[^1]);
+                    unusedCards.RemoveAt(unusedCards.Count - 1);
+                }
+                stack[^1].Revealed = true;
+                Stacks.Add(stack);
+            }
+
+            CardDeck = unusedCards;
+        }
+
+        private string IsMoveLegal(string firstCardNumber, char firstCardSuite, string secondCardNumber, char secondCardSuite)
+        {
+            var firstCardRed = firstCardSuite == '♥' || firstCardSuite == '♦';
+            var secondCardRed = secondCardSuite == '♥' || secondCardSuite == '♦';
+
+            if (((firstCardRed && secondCardRed)
+                || (!firstCardRed && !secondCardRed))
+                && (secondCardSuite != 'X'))
+                return "MOVE FAILED - Both cards are of the same color.";
+
+            var firstCardNum = GetCardNum(firstCardNumber);
+            var secondCardNum = GetCardNum(secondCardNumber);
+
+            if (firstCardNum != secondCardNum - 1 && (firstCardNum != 13 || secondCardNum != -1))
+                return "MOVE FAILED - The specified card can't be moved onto the destination.";
+
+            return string.Empty;
+        }
+
+        private int GetCardNum(string cardNumber)
+        {
+            var cardNum = 0;
+            switch (cardNumber.ToUpper())
+            {
+                case "A":
+                    cardNum = 1;
+                    break;
+                case "J":
+                    cardNum = 11;
+                    break;
+                case "Q":
+                    cardNum = 12;
+                    break;
+                case "K":
+                    cardNum = 13;
+                    break;
+                case "B": // B is the blank
+                    cardNum = 0;
+                    break;
+                default:
+                    if (!int.TryParse(cardNumber, out cardNum))
+                        cardNum = -1;
+                    break;
+            }
+
+            return cardNum;
+        }
+
+        private bool IsCardNextOnStack(Card card)
+        {
+            switch (card.Suite)
+            {
+                case '♥':
+                    return IsCardNextOnStack(TopHeart, card.Number);
+                case '♦':
+                    return IsCardNextOnStack(TopDiamond, card.Number);
+                case '♣':
+                    return IsCardNextOnStack(TopClub, card.Number);
+                case '♠':
+                    return IsCardNextOnStack(TopSpade, card.Number);
+            }
+            return false;
+        }
+
+        private bool IsCardNextOnStack(Card? TopSuiteCard, string cardNum)
+        {
+            return (TopSuiteCard == null && GetCardNum(cardNum) == 1)
+                || (TopSuiteCard != null && GetCardNum(TopSuiteCard.Number) == GetCardNum(cardNum) - 1);
+        }
+
         private void AssignIfRevealedDeckCard(ref Card? TopSuiteCard, string cardNum)
         {
-            if ((TopSuiteCard == null && GetCardNum(cardNum) != 1) 
-                || (TopSuiteCard != null && GetCardNum(TopSuiteCard.Number) != GetCardNum(cardNum) - 1))
+            if (!IsCardNextOnStack(TopSuiteCard, cardNum))
             {
                 UserMessage = "PACK FAILED - Packed card is not the next card in sequence.";
                 return;
             }
             else
             {
-                TopSuiteCard = RevealedDeckCard;
-                if (DiscardedCardDeck.Count > 0)
+                TopSuiteCard = RevealedCardDeck.Top;
+                RevealedCardDeck.Cards.Remove(RevealedCardDeck.Top);
+                if (DiscardedCardDeck.Count > 0 && RevealedCardDeck.Count == 0)
                 {
-                    RevealedDeckCard = DiscardedCardDeck[^1];
+                    RevealedCardDeck.Add(DiscardedCardDeck[^1]);
                     DiscardedCardDeck.RemoveAt(DiscardedCardDeck.Count - 1);
                 }
-                else
-                    RevealedDeckCard = null;
             }
         }
 
@@ -553,5 +599,14 @@ namespace ConsoleSolitaire
                 && CardDeck.Count == 0)
                 UserMessage = "CONGRATULATIONS! You have completed this solitaire game.";
         }
+
+        #endregion
+    }
+
+    internal enum Mode
+    {
+        Single = 1,
+        Double = 2,
+        Triple = 3
     }
 }
