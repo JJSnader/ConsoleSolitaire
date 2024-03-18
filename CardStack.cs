@@ -26,6 +26,19 @@ namespace ConsoleSolitaire
             get => cards.Count;
         }
 
+        public int BottomRevealedCardIndex
+        {
+            get
+            {
+                if (cards.Count == 0) return -1;
+                var index = 0;
+                while (index < cards.Count && !cards[index].Revealed)
+                    index++;
+                if (index == cards.Count) return -1;
+                return index;
+            }
+        }
+
 
         public void Add(Card card)
         {

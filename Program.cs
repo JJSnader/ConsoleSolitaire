@@ -11,16 +11,20 @@ namespace ConsoleSolitaire
             Console.WindowHeight = Deck.Display_Height;
             Console.SetWindowSize(Console.WindowWidth, Console.WindowHeight + 1);
 
+            var s = new Settings();
+            var backColor = s.BackColor;
             var foreColor = ConsoleColor.Black;
-            var backColor = ConsoleColor.DarkGreen;
+            if (backColor == ConsoleColor.Black)
+                foreColor = ConsoleColor.Gray;
 
             Console.ForegroundColor = foreColor;
             Console.BackgroundColor = backColor;
 
-            var deck = new Deck();
-            PrintDisplay(deck, backColor, foreColor);
-            var currentMode = deck.GameMode;
-            var currentCardBack = deck.CurrentCardBack;
+            var opposite = false;
+            var cursed = false;
+
+            var deck = new Deck(s.GameMode, s.CardBack);
+            PrintDisplay(deck, backColor, foreColor, opposite, cursed);
 
             var selectingCardBack = false;
 
@@ -42,14 +46,17 @@ namespace ConsoleSolitaire
                         if (selectingCardBack)
                         {
                             selectingCardBack = false;
-                            var cback = (CardBack)int.Parse(inputArray[0].ToUpper());
-                            currentCardBack = cback;
-                            deck.ChangeCardBack(cback);
+                            s.CardBack = (CardBack)int.Parse(inputArray[0]);
+                            deck.ChangeCardBack(s.CardBack);
                         }
                         break;
                     case "A":
                     case "AUTOPACK":
                         deck.AutoPack();
+                        break;
+                    case "AUTOSOLVE":
+                        var a = new AutoSolve(deck);
+                        a.Solve();
                         break;
                     case "BC":
                     case "BACKCOLOR":
@@ -86,10 +93,17 @@ namespace ConsoleSolitaire
                                 break;
                         }
                         Console.BackgroundColor = backColor;
+                        s.BackColor = backColor;
                         break;
                     case "CARDBACK":
                         Console.Clear();
                         selectingCardBack = true;
+                        break;
+                    case "CURED":
+                        cursed = false;
+                        break ;
+                    case "CURSED":
+                        cursed = true;
                         break;
                     case "F":
                     case "FLIP":
@@ -98,8 +112,8 @@ namespace ConsoleSolitaire
                     case "N":
                     case "NEW":
                         deck = new Deck();
-                        deck.ChangeMode(currentMode);
-                        deck.ChangeCardBack(currentCardBack);
+                        deck.ChangeMode(s.GameMode);
+                        deck.ChangeCardBack(s.CardBack);
                         break;
                     case "H":
                     case "HELP":
@@ -126,6 +140,9 @@ namespace ConsoleSolitaire
                         deck.MoveCard(firstCardNum, firstCardSuite, secondCardNum, secondCardSuite);
                         
                         break;
+                    case "OPPOSITE":
+                        opposite = !opposite;
+                        break;
                     case "P":
                     case "PACK":
                         if (inputArray.Length < 2)
@@ -150,15 +167,15 @@ namespace ConsoleSolitaire
                         {
                             case "S":
                             case "SINGLE":
-                                currentMode = Mode.Single;
+                                s.GameMode = Mode.Single;
                                 break;
                             case "D":
                             case "DOUBLE":
-                                currentMode = Mode.Double;
+                                s.GameMode = Mode.Double;
                                 break;
                             case "T":
                             case "TRIPLE":
-                                currentMode = Mode.Triple;
+                                s.GameMode = Mode.Triple;
                                 break;
                         }
                         deck.UserMessage = "New mode will be applied on the next new game.";
@@ -171,7 +188,7 @@ namespace ConsoleSolitaire
                 else if (selectingCardBack)
                     PrintCardBacks();
                 else
-                    PrintDisplay(deck, backColor, foreColor);
+                    PrintDisplay(deck, backColor, foreColor, opposite, cursed);
 
             } while (input.ToUpper() != "EXIT"
                 && input.ToUpper() != "E"
@@ -198,17 +215,33 @@ namespace ConsoleSolitaire
             return 'X';
         }
 
-        static void PrintDisplay(Deck d, ConsoleColor backColor, ConsoleColor foreColor)
+        static void PrintDisplay(Deck d, ConsoleColor backColor, ConsoleColor foreColor, bool opposite, bool cursed)
+        {
+            PrintDisplayWithColorMap(d.GetDisplay(), d.ColorMap, backColor, foreColor, opposite, cursed);
+        }
+
+        static void PrintDisplayWithColorMap(List<string> display, List<string> colorMap, ConsoleColor backColor, ConsoleColor foreColor, bool opposite, bool cursed)
         {
             Console.Clear();
-            var lines = d.GetDisplay();
-            for (int i = 0; i < lines.Count; i++)
+            var cardBackColor = ConsoleColor.White;
+            var cardForeColorPrimary = ConsoleColor.Black;
+            var cardForeColorSecondary = ConsoleColor.Red;
+            if (cursed)
+            {
+                cardBackColor = ConsoleColor.Blue;
+                cardForeColorPrimary = ConsoleColor.Red;
+                cardForeColorSecondary = ConsoleColor.Green;
+            }
+            if (opposite)
+                (cardForeColorPrimary, cardForeColorSecondary) = (cardForeColorSecondary, cardForeColorPrimary);
+
+            for (int i = 0; i < display.Count; i++)
             {
                 var currentColor = 'z';
                 var text = "";
-                for (int j = 0; j < lines[i].Length; j++)
+                for (int j = 0; j < display[i].Length; j++)
                 {
-                    if (d.ColorMap[i][j] != currentColor)
+                    if (colorMap[i][j] != currentColor)
                     {
                         if (!string.IsNullOrEmpty(text))
                         {
@@ -216,7 +249,7 @@ namespace ConsoleSolitaire
                             text = string.Empty;
                         }
 
-                        currentColor = d.ColorMap[i][j];
+                        currentColor = colorMap[i][j];
                         switch (currentColor)
                         {
                             case 'G':
@@ -224,16 +257,16 @@ namespace ConsoleSolitaire
                                 Console.ForegroundColor = foreColor;
                                 break;
                             case 'W':
-                                Console.BackgroundColor = ConsoleColor.White;
-                                Console.ForegroundColor = ConsoleColor.Black;
+                                Console.BackgroundColor = cardBackColor;
+                                Console.ForegroundColor = cardForeColorPrimary;
                                 break;
                             case 'R':
-                                Console.BackgroundColor = ConsoleColor.White;
-                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.BackgroundColor = cardBackColor;
+                                Console.ForegroundColor = cardForeColorSecondary;
                                 break;
                         }
                     }
-                    text += lines[i][j].ToString();
+                    text += display[i][j].ToString();
                 }
                 if (!string.IsNullOrEmpty(text))
                     Console.WriteLine(text);
@@ -277,26 +310,49 @@ namespace ConsoleSolitaire
                 "Choose your card back by entering the number next to it.",
                 "",
             ];
+            List<string> colorMap = [
+                "".PadLeft(Deck.Display_Width, 'G'),
+                "".PadLeft(Deck.Display_Width, 'G'),
+                "".PadLeft(Deck.Display_Width, 'G')
+            ];
 
             var cb = new CardBacks();
             for (int i = 0; i < cb.Standard.Count; i++)
+            {
                 display.Add("".PadLeft(4));
+                colorMap.Add("".PadLeft(4, 'G'));
+            }
 
             for (int i = 0; i < cb.Standard.Count; i++)
             {
                 display[i + 3] += cb.Standard[i] + "".PadLeft(4);
+                colorMap[i + 3] += "".PadLeft(cb.Standard[i].Length, 'W') + "".PadLeft(4, 'G');
                 display[i + 3] += cb.Clean[i] + "".PadLeft(4);
+                colorMap[i + 3] += "".PadLeft(cb.Clean[i].Length, 'W') + "".PadLeft(4, 'G');
                 display[i + 3] += cb.Framed[i] + "".PadLeft(4);
+                colorMap[i + 3] += "".PadLeft(cb.Framed[i].Length, 'W') + "".PadLeft(4, 'G');
                 display[i + 3] += cb.Diamond[i] + "".PadLeft(4);
+                colorMap[i + 3] += "".PadLeft(cb.Diamond[i].Length, 'W') + "".PadLeft(4, 'G');
+
+                for (int j = 0; j < display[i + 3].Length; j++)
+                {
+                    if (display[i + 3][j] == '♥' || display[i + 3][j] == '♦')
+                    {
+                        colorMap[i + 3] = colorMap[i + 3][..j] + 'R' + colorMap[i + 3][(j + 1)..];
+                    }
+                }
+
             }
-            display.Add("".PadLeft(4)
+            var cardNames = "".PadLeft(4)
                 + $"{nameof(cb.Standard)} (1)".PadRight(Deck.Card_Width + 4)
                 + $"{nameof(cb.Clean)} (2)".PadRight(Deck.Card_Width + 4)
                 + $"{nameof(cb.Framed)} (3)".PadRight(Deck.Card_Width + 4)
-                + $"{nameof(cb.Diamond)} (4)".PadRight(Deck.Card_Width + 4));
+                + $"{nameof(cb.Diamond)} (4)".PadRight(Deck.Card_Width + 4);
 
-            foreach (var d in display)
-                Console.WriteLine(d);
+            display.Add(cardNames);
+            colorMap.Add("".PadLeft(cardNames.Length, 'G'));
+
+            PrintDisplayWithColorMap(display, colorMap, ConsoleColor.White, ConsoleColor.Black, false, false);
         }
     }
 }

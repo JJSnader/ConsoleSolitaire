@@ -53,16 +53,24 @@ namespace ConsoleSolitaire
         private Card CardBack { get; set; }
         private Card EmptyDeck { get; set; }
 
-        public Deck() 
+        private DateTime _startDate;
+
+        public Deck() : this(Mode.Single, ConsoleSolitaire.CardBack.Standard)
+        {
+        }
+
+        public Deck(Mode gameMode, CardBack cardBack)
         {
             _allCards = [];
             Stacks = [];
             CardDeck = [];
             DiscardedCardDeck = [];
             _cb = new();
+            _startDate = DateTime.Now;
             RevealedCardDeck = new();
-            CurrentCardBack = ConsoleSolitaire.CardBack.Standard;
-            CardBack = new Card(_cb.Standard, false, "0", 'X');
+            CurrentCardBack = cardBack;
+            GameMode = gameMode;
+            CardBack = new Card(_cb.GetCardBack(cardBack), false, "0", 'X');
             EmptyDeck = new Card([
                 "┏━━━━━━━━━━━┓",
                 "┃           ┃",
@@ -445,6 +453,59 @@ namespace ConsoleSolitaire
             CardBack = new Card(_cb.GetCardBack(newBack), false, "0", 'X');
         }
 
+        public int GetCardNum(string cardNumber)
+        {
+            var cardNum = 0;
+            switch (cardNumber.ToUpper())
+            {
+                case "A":
+                    cardNum = 1;
+                    break;
+                case "J":
+                    cardNum = 11;
+                    break;
+                case "Q":
+                    cardNum = 12;
+                    break;
+                case "K":
+                    cardNum = 13;
+                    break;
+                case "B": // B is the blank
+                    cardNum = 0;
+                    break;
+                default:
+                    if (!int.TryParse(cardNumber, out cardNum))
+                        cardNum = -1;
+                    break;
+            }
+
+            return cardNum;
+        }
+
+        public bool IsOppositeSuite(char firstCardSuite, char secondCardSuite)
+        {
+            var firstCardRed = firstCardSuite == '♥' || firstCardSuite == '♦';
+            var secondCardRed = secondCardSuite == '♥' || secondCardSuite == '♦';
+
+            return firstCardRed != secondCardRed;
+        }
+
+        public bool IsCardNextOnStack(Card card)
+        {
+            switch (card.Suite)
+            {
+                case '♥':
+                    return IsCardNextOnStack(TopHeart, card.Number);
+                case '♦':
+                    return IsCardNextOnStack(TopDiamond, card.Number);
+                case '♣':
+                    return IsCardNextOnStack(TopClub, card.Number);
+                case '♠':
+                    return IsCardNextOnStack(TopSpade, card.Number);
+            }
+            return false;
+        }
+
         #region Private
 
         private void LoadDeck()
@@ -519,51 +580,6 @@ namespace ConsoleSolitaire
             return string.Empty;
         }
 
-        private int GetCardNum(string cardNumber)
-        {
-            var cardNum = 0;
-            switch (cardNumber.ToUpper())
-            {
-                case "A":
-                    cardNum = 1;
-                    break;
-                case "J":
-                    cardNum = 11;
-                    break;
-                case "Q":
-                    cardNum = 12;
-                    break;
-                case "K":
-                    cardNum = 13;
-                    break;
-                case "B": // B is the blank
-                    cardNum = 0;
-                    break;
-                default:
-                    if (!int.TryParse(cardNumber, out cardNum))
-                        cardNum = -1;
-                    break;
-            }
-
-            return cardNum;
-        }
-
-        private bool IsCardNextOnStack(Card card)
-        {
-            switch (card.Suite)
-            {
-                case '♥':
-                    return IsCardNextOnStack(TopHeart, card.Number);
-                case '♦':
-                    return IsCardNextOnStack(TopDiamond, card.Number);
-                case '♣':
-                    return IsCardNextOnStack(TopClub, card.Number);
-                case '♠':
-                    return IsCardNextOnStack(TopSpade, card.Number);
-            }
-            return false;
-        }
-
         private bool IsCardNextOnStack(Card? TopSuiteCard, string cardNum)
         {
             return (TopSuiteCard == null && GetCardNum(cardNum) == 1)
@@ -597,7 +613,11 @@ namespace ConsoleSolitaire
                 && TopSpade != null && TopSpade.Number == "K"
                 && DiscardedCardDeck.Count == 0
                 && CardDeck.Count == 0)
-                UserMessage = "CONGRATULATIONS! You have completed this solitaire game.";
+            {
+                var completionTime = DateTime.Now - _startDate;
+                UserMessage = $"CONGRATULATIONS! You have completed this solitaire game. Completion time: {completionTime}.";
+
+            }
         }
 
         #endregion

@@ -13,3 +13,6 @@ C:\dev\ConsoleSolitaire\ConsoleSolitaire\obj\Debug\net8.0\ConsoleSolitaire.pdb
 C:\dev\ConsoleSolitaire\ConsoleSolitaire\obj\Debug\net8.0\ConsoleSolitaire.genruntimeconfig.cache
 C:\dev\ConsoleSolitaire\ConsoleSolitaire\obj\Debug\net8.0\ref\ConsoleSolitaire.dll
 C:\dev\ConsoleSolitaire\ConsoleSolitaire\obj\Debug\net8.0\ConsoleSolitaire.sourcelink.json
+C:\dev\ConsoleSolitaire\ConsoleSolitaire\obj\Debug\net8.0\ConsoleSolitaire.csproj.AssemblyReference.cache
+C:\dev\ConsoleSolitaire\ConsoleSolitaire\bin\Debug\net8.0\Newtonsoft.Json.dll
+C:\dev\ConsoleSolitaire\ConsoleSolitaire\obj\Debug\net8.0\ConsoleSolitaire.csproj.CopyComplete
