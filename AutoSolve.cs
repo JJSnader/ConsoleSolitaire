@@ -67,6 +67,12 @@ namespace ConsoleSolitaire
 
                             var s1Bottom = s1[s1.BottomRevealedCardIndex];
 
+                            if (s1Bottom.Number == "A")
+                            {
+                                _d.Pack(s1Bottom.Number, s1Bottom.Suite);
+                                movedCard = true;
+                                break;
+                            }
                             if (_d.IsOppositeSuite(s1Bottom.Suite, bottom.Suite) && _d.GetCardNum(s1Bottom.Number) == _d.GetCardNum(bottom.Number) - 1)
                             {
                                 Log($"Move {s1Bottom.Number}{s1Bottom.Suite} {bottom.Number}{bottom.Suite}");
