@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ConsoleSolitaire")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9e91b00fa7b52c35d80e71b77570dd0bdbceed30")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+29d7cef90dd14264001bd838ba39b6c0b4f07c85")]
 [assembly: System.Reflection.AssemblyProductAttribute("ConsoleSolitaire")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ConsoleSolitaire")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
