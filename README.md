@@ -28,3 +28,6 @@ Most commands have a shortcut, which is shown in parentheses next to it. Command
 - Cardback: Allows you to choose a different card back to display on the deck.
 - Mode: Allows you to change how many cards are flipped off the deck at once. Options are Single, Double, and Triple.
 In addition, there may be some easter eggs that are only documented in the code.
+#### Minor note
+If you rummage around in the code you'll see some stuff for an autosolver; it's not complete and just blows up a text file at the moment.
+Will it ever get finished? Who knows, maybe when I feel like playing solitaire again.
