@@ -27,6 +27,8 @@ namespace ConsoleSolitaire
 
         public List<Card> DiscardedCardDeck { get; set; }
 
+        public event EventHandler<double>? GameCompleted;
+
         public RevealedCardStack RevealedCardDeck { get; set; }
 
         public Card? TopSpade 
@@ -50,27 +52,26 @@ namespace ConsoleSolitaire
 
         private CardBacks _cb;
 
+        private Settings _settings;
+
         private Card CardBack { get; set; }
         private Card EmptyDeck { get; set; }
 
         private DateTime _startDate;
 
-        public Deck() : this(Mode.Single, ConsoleSolitaire.CardBack.Standard)
-        {
-        }
-
-        public Deck(Mode gameMode, CardBack cardBack)
+        public Deck(Settings s)
         {
             _allCards = [];
+            _settings = s;
             Stacks = [];
             CardDeck = [];
             DiscardedCardDeck = [];
             _cb = new();
             _startDate = DateTime.Now;
             RevealedCardDeck = new();
-            CurrentCardBack = cardBack;
-            GameMode = gameMode;
-            CardBack = new Card(_cb.GetCardBack(cardBack), false, "0", 'X');
+            CurrentCardBack = s.CardBack;
+            GameMode = s.GameMode;
+            CardBack = new Card(_cb.GetCardBack(s.CardBack), false, "0", 'X');
             EmptyDeck = new Card([
                 "┏━━━━━━━━━━━┓",
                 "┃           ┃",
@@ -191,7 +192,7 @@ namespace ConsoleSolitaire
                 {
                     if (CardDeck.Count > 0)
                     {
-                        RevealedCardDeck.Add(CardDeck[^1]);
+                        RevealedCardDeck?.Add(CardDeck[^1]);
                         CardDeck.RemoveAt(CardDeck.Count - 1);
                     }
                 }
@@ -617,6 +618,8 @@ namespace ConsoleSolitaire
                 var completionTime = DateTime.Now - _startDate;
                 UserMessage = $"CONGRATULATIONS! You have completed this solitaire game. Completion time: {completionTime}.";
 
+                _settings.CompletionTimes.Add(completionTime.TotalMilliseconds);
+                _settings.SaveSettings();
             }
         }
 

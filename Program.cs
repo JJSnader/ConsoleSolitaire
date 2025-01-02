@@ -23,7 +23,7 @@ namespace ConsoleSolitaire
             var opposite = false;
             var cursed = false;
 
-            var deck = new Deck(s.GameMode, s.CardBack);
+            var deck = new Deck(s);
             PrintDisplay(deck, backColor, foreColor, opposite, cursed);
 
             var selectingCardBack = false;
@@ -37,6 +37,7 @@ namespace ConsoleSolitaire
 
                 var inputArray = input.Split(' ');
                 var isHelp = false;
+                var printStats = false;
                 switch (inputArray[0].ToUpper())
                 {
                     case "1":
@@ -111,7 +112,7 @@ namespace ConsoleSolitaire
                         break;
                     case "N":
                     case "NEW":
-                        deck = new Deck();
+                        deck = new Deck(s);
                         deck.ChangeMode(s.GameMode);
                         deck.ChangeCardBack(s.CardBack);
                         break;
@@ -180,13 +181,17 @@ namespace ConsoleSolitaire
                         }
                         deck.UserMessage = "New mode will be applied on the next new game.";
                         break;
-
+                    case "STATS":
+                        printStats = true;
+                        break;
                 }
 
                 if (isHelp)
                     PrintHelpText();
                 else if (selectingCardBack)
                     PrintCardBacks();
+                else if (printStats)
+                    PrintStats(s);
                 else
                     PrintDisplay(deck, backColor, foreColor, opposite, cursed);
 
@@ -213,6 +218,32 @@ namespace ConsoleSolitaire
                     return '♠';
             }
             return 'X';
+        }
+
+        static void PrintStats(Settings s)
+        {
+            Console.Clear();
+
+            if (s.CompletionTimes.Count == 0)
+            {
+                Console.WriteLine("No stats to load!");
+                return;
+            }
+
+            var avg = s.CompletionTimes.Average();
+            var min = s.CompletionTimes.Min();
+
+            Console.WriteLine($"Fastest completion time: {TimeSpan.FromMilliseconds(min):hh\\:mm\\:ss}");
+            Console.WriteLine($"Average completion time: {TimeSpan.FromMilliseconds(avg):hh\\:mm\\:ss}");
+            Console.WriteLine();
+            Console.WriteLine("All completion times");
+            Console.WriteLine("--------------------");
+            foreach (var time in s.CompletionTimes)
+            {
+                Console.WriteLine($"{TimeSpan.FromMilliseconds(time):hh\\:mm\\:ss}");
+            }
+            Console.WriteLine();
+            Console.WriteLine("Type 'return' to go back to the game.");
         }
 
         static void PrintDisplay(Deck d, ConsoleColor backColor, ConsoleColor foreColor, bool opposite, bool cursed)

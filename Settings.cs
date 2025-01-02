@@ -131,6 +131,11 @@ namespace ConsoleSolitaire
             }
         }
 
+        public List<double> CompletionTimes
+        {
+            get => _json.CompletionTimes ??= [];
+        }
+
         private Mode? gameMode;
         private CardBack? cardBack;
         private ConsoleColor? backColor;
@@ -167,7 +172,8 @@ namespace ConsoleSolitaire
                 {
                     BackColor = "GREEN",
                     GameMode = "SINGLE",
-                    CardBack = "1"
+                    CardBack = "1",
+                    CompletionTimes = [],
                 };
 
                 SaveSettings();
@@ -188,5 +194,7 @@ namespace ConsoleSolitaire
         public string? BackColor { get; set; }
 
         public string? GameMode { get; set; }
+
+        public List<double>? CompletionTimes { get; set; }
     }
 }
