@@ -27,6 +27,7 @@ Most commands have a shortcut, which is shown in parentheses next to it. Command
 - BackColor (bc): Allows you to specify a new background color. Valid options are blue, green (default), red, gray, yellow, and black.
 - Cardback: Allows you to choose a different card back to display on the deck.
 - Mode: Allows you to change how many cards are flipped off the deck at once. Options are Single, Double, and Triple.
+- Stats: Shows statistics. All stored completion times, as well as the fastest completion time and average completion time.
 In addition, there may be some easter eggs that are only documented in the code.
 #### Minor note
 If you rummage around in the code you'll see some stuff for an autosolver; it's not complete and just blows up a text file at the moment.

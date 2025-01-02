@@ -326,6 +326,7 @@ namespace ConsoleSolitaire
                 "New       : Start a new game.",
                 "Pack      : Moves the specified card to its suite's final pile. ",
                 "Quit      : Same as Exit. ",
+                "STATS     : Show statistics. ",
                 " ",
                 "Type Return to return to your game."
             ];
